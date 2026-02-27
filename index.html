@@ -526,6 +526,46 @@ print(result2)  # ['cat']</code></pre>
           </div>
         </section>
 
+        <section>
+          <p style="font-size: 0.75em; margin-bottom: 0.5rem">
+            Using <code class="inline">re.findall()</code>, translate:
+          </p>
+
+          <div style="text-align: center; font-size: 0.75em; margin-bottom: 0.6rem">
+            <span style="font-style: italic" id="findall-game-prompt"></span>
+          </div>
+
+          <div class="regex-game" id="findall-builder-game">
+            <div class="regex-game-progress">
+              <span id="findall-game-round">Round 1 of 3</span>
+              <span id="findall-game-score">Score: 0</span>
+            </div>
+
+            <div
+              id="findall-game-answer"
+              class="regex-answer-row empty"
+              aria-label="Selected answer tokens"
+            ></div>
+
+            <div
+              id="findall-game-bank"
+              class="regex-token-bank"
+              aria-label="Available tokens"
+            ></div>
+
+            <div class="regex-game-controls">
+              <button id="findall-game-check" class="regex-game-btn primary" type="button">
+                Check
+              </button>
+              <button id="findall-game-clear" class="regex-game-btn secondary" type="button">
+                Clear
+              </button>
+            </div>
+
+            <p id="findall-game-feedback" class="regex-game-feedback" aria-live="polite"></p>
+          </div>
+        </section>
+
         <!-- ===== SLIDE 7: METACHARACTERS ===== -->
         <section>
           <h2>✨ Metacharacters</h2>
@@ -1655,6 +1695,209 @@ re.search(r"\d+", "abc 123")</code></pre>
       });
 
       renderSearchGameRound();
+
+      const findallGameRounds = [
+        {
+          prompt: "Game Dev: Find every 'coin' in event_log and store matches in coin_hits.",
+          target: ["coin_hits", "=", "re.findall(", 'r"coin",', "event_log", ")"],
+          tokens: [
+            "coin_hits",
+            "=",
+            "re.findall(",
+            'r"coin",',
+            "event_log",
+            ")",
+            "re.search(",
+            "coin_hit",
+            'r"coins",',
+          ],
+        },
+        {
+          prompt: "Web Dev: Find all 'btn' classes in page_html and save to button_classes.",
+          target: [
+            "button_classes",
+            "=",
+            "re.findall(",
+            'r"btn",',
+            "page_html",
+            ")",
+          ],
+          tokens: [
+            "button_classes",
+            "=",
+            "re.findall(",
+            'r"btn",',
+            "page_html",
+            ")",
+            "re.match(",
+            'r"button",',
+            "buttons_html",
+          ],
+        },
+        {
+          prompt: "Civil Engineering IT: Find all 'bridge' mentions in report_text and save to bridge_hits.",
+          target: [
+            "bridge_hits",
+            "=",
+            "re.findall(",
+            'r"bridge",',
+            "report_text",
+            ")",
+          ],
+          tokens: [
+            "bridge_hits",
+            "=",
+            "re.findall(",
+            'r"bridge",',
+            "report_text",
+            ")",
+            "re.search(",
+            'r"bridges",',
+            "bridge_log",
+          ],
+        },
+      ];
+
+      const findallGameBank = document.getElementById("findall-game-bank");
+      const findallGameAnswer = document.getElementById("findall-game-answer");
+      const findallGamePrompt = document.getElementById("findall-game-prompt");
+      const findallGameRoundText = document.getElementById("findall-game-round");
+      const findallGameScoreText = document.getElementById("findall-game-score");
+      const findallGameFeedback = document.getElementById("findall-game-feedback");
+      const findallGameCheckBtn = document.getElementById("findall-game-check");
+      const findallGameClearBtn = document.getElementById("findall-game-clear");
+
+      let findallGameRoundIndex = 0;
+      let findallGameScore = 0;
+      let findallGameSelectedIndexes = [];
+
+      const makeFindallGameTokenButton = (text, index) => {
+        const token = document.createElement("button");
+        token.type = "button";
+        token.className = "regex-token";
+        token.textContent = text;
+        token.dataset.index = String(index);
+        return token;
+      };
+
+      const updateFindallGameHeader = () => {
+        findallGameRoundText.textContent = `Round ${findallGameRoundIndex + 1} of ${findallGameRounds.length}`;
+        findallGameScoreText.textContent = `Score: ${findallGameScore}`;
+      };
+
+      const updateFindallGameAnswerPlaceholder = () => {
+        findallGameAnswer.classList.toggle("empty", findallGameSelectedIndexes.length === 0);
+      };
+
+      const setFindallGameFeedback = (message, tone = "") => {
+        findallGameFeedback.textContent = message;
+        findallGameFeedback.classList.remove("success", "error");
+        if (tone) {
+          findallGameFeedback.classList.add(tone);
+        }
+      };
+
+      const syncFindallGameBankState = () => {
+        const active = new Set(findallGameSelectedIndexes);
+        findallGameBank.querySelectorAll(".regex-token").forEach((tokenEl) => {
+          const index = Number(tokenEl.dataset.index);
+          const used = active.has(index);
+          tokenEl.classList.toggle("used", used);
+          tokenEl.disabled = used;
+        });
+      };
+
+      const renderFindallGameAnswer = () => {
+        const round = findallGameRounds[findallGameRoundIndex];
+        findallGameAnswer.innerHTML = "";
+
+        findallGameSelectedIndexes.forEach((index, answerIndex) => {
+          const token = makeFindallGameTokenButton(round.tokens[index], index);
+          token.classList.add("answer-token");
+          token.title = "Tap to remove";
+          token.addEventListener("click", () => {
+            findallGameSelectedIndexes.splice(answerIndex, 1);
+            renderFindallGameAnswer();
+            syncFindallGameBankState();
+            updateFindallGameAnswerPlaceholder();
+          });
+          findallGameAnswer.appendChild(token);
+        });
+
+        updateFindallGameAnswerPlaceholder();
+      };
+
+      const renderFindallGameRound = () => {
+        const round = findallGameRounds[findallGameRoundIndex];
+        findallGameSelectedIndexes = [];
+        findallGameBank.innerHTML = "";
+        findallGameAnswer.innerHTML = "";
+
+        if (findallGamePrompt) {
+          findallGamePrompt.textContent = round.prompt;
+        }
+
+        setFindallGameFeedback("");
+
+        const shuffledIndexes = getSearchGameShuffledIndexes(round.tokens.length);
+
+        shuffledIndexes.forEach((index) => {
+          const token = makeFindallGameTokenButton(round.tokens[index], index);
+          token.addEventListener("click", () => {
+            findallGameSelectedIndexes.push(index);
+            renderFindallGameAnswer();
+            syncFindallGameBankState();
+          });
+          findallGameBank.appendChild(token);
+        });
+
+        updateFindallGameHeader();
+        syncFindallGameBankState();
+        updateFindallGameAnswerPlaceholder();
+      };
+
+      const goToNextFindallGameRound = () => {
+        if (findallGameRoundIndex < findallGameRounds.length - 1) {
+          findallGameRoundIndex += 1;
+          renderFindallGameRound();
+          return;
+        }
+
+        setFindallGameFeedback(
+          `Challenge complete! Final score: ${findallGameScore}/${findallGameRounds.length}`,
+          "success",
+        );
+        findallGameCheckBtn.disabled = true;
+      };
+
+      findallGameCheckBtn.addEventListener("click", () => {
+        const round = findallGameRounds[findallGameRoundIndex];
+        const answerTokens = findallGameSelectedIndexes.map((index) => round.tokens[index]);
+
+        const correct =
+          answerTokens.length === round.target.length &&
+          answerTokens.every((token, index) => token === round.target[index]);
+
+        if (correct) {
+          findallGameScore += 1;
+          updateFindallGameHeader();
+          setFindallGameFeedback("Great! That's a correct re.findall() call.", "success");
+          launchRegexConfetti();
+          setTimeout(goToNextFindallGameRound, 750);
+          return;
+        }
+
+        setFindallGameFeedback("Not quite. Recheck token order and arguments.", "error");
+      });
+
+      findallGameClearBtn.addEventListener("click", () => {
+        findallGameSelectedIndexes = [];
+        renderFindallGameAnswer();
+        syncFindallGameBankState();
+        setFindallGameFeedback("Answer cleared.");
+      });
+
+      renderFindallGameRound();
 
       Reveal.initialize({
         hash: true,
