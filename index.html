@@ -229,6 +229,7 @@
       }
       .regex-token.answer-token {
         padding: 0;
+        font-size: 0.68em;
         border: 2px solid transparent;
       }
       .regex-token.answer-token:hover {
@@ -1459,54 +1460,46 @@ re.search(r"\d+", "abc 123")</code></pre>
 
       const searchGameRounds = [
         {
-          prompt: "Find 'Juan' inside text and store the result in match.",
-          target: ["match", "=", "re.search(", 'r"Juan",', "text", ")"],
+          prompt: "Police IT: Find 'CASE' in report_text and store the result in case_hit.",
+          target: ["case_hit", "=", "re.search(", 'r"CASE",', "report_text", ")"],
           tokens: [
-            "match",
+            "case_hit",
             "=",
             "re.search(",
-            'r"Juan",',
-            "text",
+            'r"CASE",',
+            "report_text",
             ")",
             "re.match(",
-            'r"juan",',
+            'r"case",',
             "re.findall(",
           ],
         },
         {
-          prompt: "Search for exactly three digits in id_text and save to found.",
-          target: ["found", "=", "re.search(", 'r"\\d{3}",', "id_text", ")"],
+          prompt: "Hospital IT: Find 'urgent' in triage_note and save to room_match.",
+          target: ["room_match", "=", "re.search(", 'r"urgent",', "triage_note", ")"],
           tokens: [
-            "found",
+            "room_match",
             "=",
             "re.search(",
-            'r"\\d{3}",',
-            "id_text",
+            'r"urgent",',
+            "triage_note",
             ")",
             "re.match(",
-            'r"\\d+",',
-            "ids",
+            'r"URgent",',
+            "patients",
           ],
         },
         {
-          prompt: "Find the word 'error' in log_line using a case-insensitive search.",
-          target: [
-            "hit",
-            "=",
-            "re.search(",
-            'r"error",',
-            "log_line,",
-            "re.I",
-            ")",
-          ],
+          prompt: "Hotel IT: Find 'checkout' in booking_log and save to checkout_hit.",
+          target: ["checkout_hit", "=", "re.search(", 'r"checkout",', "booking_log", ")"],
           tokens: [
-            "hit",
+            "checkout_hit",
             "=",
             "re.search(",
-            'r"error",',
-            "log_line,",
-            "re.I",
+            'r"checkout",',
+            "booking_log",
             ")",
+            "re.I",
             "re.M",
             "re.findall(",
           ],
