@@ -740,6 +740,47 @@ print(re.findall(r"\d", text))   # ['0','9','1','7','1','2','3','4','5','6','7']
 print(re.findall(r"\w+", text))  # ['My', 'phone', 'is', '0917', '123', '4567']</code></pre>
         </section>
 
+        <section>
+          <p style="font-size: 0.75em; margin-bottom: 0.35rem">
+            Using character classes/shorthands and the best
+            <code class="inline">re</code> function, translate:
+          </p>
+
+          <div style="text-align: center; font-size: 0.75em; margin-bottom: 0.6rem">
+            <span style="font-style: italic" id="class-game-prompt"></span>
+          </div>
+
+          <div class="regex-game" id="class-builder-game">
+            <div class="regex-game-progress">
+              <span id="class-game-round">Round 1 of 3</span>
+              <span id="class-game-score">Score: 0</span>
+            </div>
+
+            <div
+              id="class-game-answer"
+              class="regex-answer-row empty"
+              aria-label="Selected answer tokens"
+            ></div>
+
+            <div
+              id="class-game-bank"
+              class="regex-token-bank"
+              aria-label="Available tokens"
+            ></div>
+
+            <div class="regex-game-controls">
+              <button id="class-game-check" class="regex-game-btn primary" type="button">
+                Check
+              </button>
+              <button id="class-game-clear" class="regex-game-btn secondary" type="button">
+                Clear
+              </button>
+            </div>
+
+            <p id="class-game-feedback" class="regex-game-feedback" aria-live="polite"></p>
+          </div>
+        </section>
+
         <!-- ===== SLIDE 11: ANCHORS ===== -->
         <section>
           <h2>
@@ -2128,6 +2169,212 @@ re.search(r"\d+", "abc 123")</code></pre>
       });
 
       renderDotGameRound();
+
+      const classGameRounds = [
+        {
+          prompt:
+            "Hospital IT: Detect whether triage_log contains any patient-number sequence and save to patient_hit.",
+          target: ["patient_hit", "=", "re.search(", 'r"\\d+",', "triage_log", ")"],
+          tokens: [
+            "patient_hit",
+            "=",
+            "re.search(",
+            'r"\\d+",',
+            "triage_log",
+            ")",
+            "re.findall(",
+            'r"[A-Z]+",',
+            "patient_number",
+          ],
+        },
+        {
+          prompt:
+            "Airport IT: Extract gate IDs like A12/B07 from departure_board and save to codes.",
+          target: [
+            "codes",
+            "=",
+            "re.findall(",
+            'r"[A-Z]\\d{2}",',
+            "departure_board",
+            ")",
+          ],
+          tokens: [
+            "codes",
+            "=",
+            "re.findall(",
+            'r"[A-Z]\\d{2}",',
+            "departure_board",
+            ")",
+            "re.match(",
+            'r"\\w+",',
+            "gate_board",
+          ],
+        },
+        {
+          prompt:
+            "Military IT: Validate that radio_code starts with 3 uppercase letters and save to code_header.",
+          target: [
+            "code_header",
+            "=",
+            "re.match(",
+            'r"[A-Z]{3}",',
+            "radio_code",
+            ")",
+          ],
+          tokens: [
+            "code_header",
+            "=",
+            "re.match(",
+            'r"[A-Z]{3}",',
+            "radio_code",
+            ")",
+            "re.sub(",
+            'r"\\d+",',
+            "signals",
+          ],
+        },
+      ];
+
+      const classGameBank = document.getElementById("class-game-bank");
+      const classGameAnswer = document.getElementById("class-game-answer");
+      const classGamePrompt = document.getElementById("class-game-prompt");
+      const classGameRoundText = document.getElementById("class-game-round");
+      const classGameScoreText = document.getElementById("class-game-score");
+      const classGameFeedback = document.getElementById("class-game-feedback");
+      const classGameCheckBtn = document.getElementById("class-game-check");
+      const classGameClearBtn = document.getElementById("class-game-clear");
+
+      let classGameRoundIndex = 0;
+      let classGameScore = 0;
+      let classGameSelectedIndexes = [];
+
+      const makeClassGameTokenButton = (text, index) => {
+        const token = document.createElement("button");
+        token.type = "button";
+        token.className = "regex-token";
+        token.textContent = text;
+        token.dataset.index = String(index);
+        return token;
+      };
+
+      const updateClassGameHeader = () => {
+        classGameRoundText.textContent = `Round ${classGameRoundIndex + 1} of ${classGameRounds.length}`;
+        classGameScoreText.textContent = `Score: ${classGameScore}`;
+      };
+
+      const updateClassGameAnswerPlaceholder = () => {
+        classGameAnswer.classList.toggle("empty", classGameSelectedIndexes.length === 0);
+      };
+
+      const setClassGameFeedback = (message, tone = "") => {
+        classGameFeedback.textContent = message;
+        classGameFeedback.classList.remove("success", "error");
+        if (tone) {
+          classGameFeedback.classList.add(tone);
+        }
+      };
+
+      const syncClassGameBankState = () => {
+        const active = new Set(classGameSelectedIndexes);
+        classGameBank.querySelectorAll(".regex-token").forEach((tokenEl) => {
+          const index = Number(tokenEl.dataset.index);
+          const used = active.has(index);
+          tokenEl.classList.toggle("used", used);
+          tokenEl.disabled = used;
+        });
+      };
+
+      const renderClassGameAnswer = () => {
+        const round = classGameRounds[classGameRoundIndex];
+        classGameAnswer.innerHTML = "";
+
+        classGameSelectedIndexes.forEach((index, answerIndex) => {
+          const token = makeClassGameTokenButton(round.tokens[index], index);
+          token.classList.add("answer-token");
+          token.title = "Tap to remove";
+          token.addEventListener("click", () => {
+            classGameSelectedIndexes.splice(answerIndex, 1);
+            renderClassGameAnswer();
+            syncClassGameBankState();
+            updateClassGameAnswerPlaceholder();
+          });
+          classGameAnswer.appendChild(token);
+        });
+
+        updateClassGameAnswerPlaceholder();
+      };
+
+      const renderClassGameRound = () => {
+        const round = classGameRounds[classGameRoundIndex];
+        classGameSelectedIndexes = [];
+        classGameBank.innerHTML = "";
+        classGameAnswer.innerHTML = "";
+
+        if (classGamePrompt) {
+          classGamePrompt.textContent = round.prompt;
+        }
+
+        setClassGameFeedback("");
+
+        const shuffledIndexes = getSearchGameShuffledIndexes(round.tokens.length);
+
+        shuffledIndexes.forEach((index) => {
+          const token = makeClassGameTokenButton(round.tokens[index], index);
+          token.addEventListener("click", () => {
+            classGameSelectedIndexes.push(index);
+            renderClassGameAnswer();
+            syncClassGameBankState();
+          });
+          classGameBank.appendChild(token);
+        });
+
+        updateClassGameHeader();
+        syncClassGameBankState();
+        updateClassGameAnswerPlaceholder();
+      };
+
+      const goToNextClassGameRound = () => {
+        if (classGameRoundIndex < classGameRounds.length - 1) {
+          classGameRoundIndex += 1;
+          renderClassGameRound();
+          return;
+        }
+
+        setClassGameFeedback(
+          `Challenge complete! Final score: ${classGameScore}/${classGameRounds.length}`,
+          "success",
+        );
+        classGameCheckBtn.disabled = true;
+      };
+
+      classGameCheckBtn.addEventListener("click", () => {
+        const round = classGameRounds[classGameRoundIndex];
+        const answerTokens = classGameSelectedIndexes.map((index) => round.tokens[index]);
+
+        const correct =
+          answerTokens.length === round.target.length &&
+          answerTokens.every((token, index) => token === round.target[index]);
+
+        if (correct) {
+          classGameScore += 1;
+          updateClassGameHeader();
+          setClassGameFeedback("Excellent! Correct function + character class shorthand.", "success");
+          launchRegexConfetti();
+          setTimeout(goToNextClassGameRound, 750);
+          return;
+        }
+
+        setClassGameFeedback("Not quite. Recheck the class pattern and argument order.", "error");
+      });
+
+      classGameClearBtn.addEventListener("click", () => {
+        classGameSelectedIndexes = [];
+        renderClassGameAnswer();
+        syncClassGameBankState();
+        setClassGameFeedback("Answer cleared.");
+      });
+
+      renderClassGameRound();
 
       Reveal.initialize({
         hash: true,
