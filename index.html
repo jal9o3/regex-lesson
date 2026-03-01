@@ -103,6 +103,11 @@
         padding: 0.8em;
         font-size: 0.78em;
       }
+      .card-center-row {
+        grid-column: 1 / -1;
+        max-width: calc(50% - 0.5em);
+        justify-self: center;
+      }
       .card h4 {
         color: var(--accent);
         margin: 0 0 0.4em;
@@ -1354,7 +1359,7 @@ re.match(r"google.com", url)
 # Escape the dot
 re.match(r"google\.com", url)</code></pre>
             </div>
-            <div class="card">
+            <div class="card card-center-row">
               <h4>❌ match() vs search()</h4>
               <pre><code class="language-python"># Won't work if not at start
 re.match(r"\d+", "abc 123")
