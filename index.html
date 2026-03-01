@@ -631,6 +631,47 @@ text = "cat bat 1at !at"
 print(re.findall(r".at", text))  # ['cat', 'bat', '1at', '!at']</code></pre>
         </section>
 
+        <section>
+          <p style="font-size: 0.75em; margin-bottom: 0.5rem">
+            Using dot <code class="inline">.</code> with
+            <code class="inline">re.findall()</code>, translate:
+          </p>
+
+          <div style="text-align: center; font-size: 0.75em; margin-bottom: 0.6rem">
+            <span style="font-style: italic" id="dot-game-prompt"></span>
+          </div>
+
+          <div class="regex-game" id="dot-builder-game">
+            <div class="regex-game-progress">
+              <span id="dot-game-round">Round 1 of 3</span>
+              <span id="dot-game-score">Score: 0</span>
+            </div>
+
+            <div
+              id="dot-game-answer"
+              class="regex-answer-row empty"
+              aria-label="Selected answer tokens"
+            ></div>
+
+            <div
+              id="dot-game-bank"
+              class="regex-token-bank"
+              aria-label="Available tokens"
+            ></div>
+
+            <div class="regex-game-controls">
+              <button id="dot-game-check" class="regex-game-btn primary" type="button">
+                Check
+              </button>
+              <button id="dot-game-clear" class="regex-game-btn secondary" type="button">
+                Clear
+              </button>
+            </div>
+
+            <p id="dot-game-feedback" class="regex-game-feedback" aria-live="polite"></p>
+          </div>
+        </section>
+
         <!-- ===== SLIDE 9: CHARACTER CLASSES ===== -->
         <section>
           <h2>🗂️ Character Classes <code class="inline">[ ]</code></h2>
@@ -1898,6 +1939,195 @@ re.search(r"\d+", "abc 123")</code></pre>
       });
 
       renderFindallGameRound();
+
+      const dotGameRounds = [
+        {
+          prompt: "Chat App: Find all 3-letter words ending in 'at' in chat_text and save to at_words.",
+          target: ["at_words", "=", "re.findall(", 'r".at",', "chat_text", ")"],
+          tokens: [
+            "at_words",
+            "=",
+            "re.findall(",
+            'r".at",',
+            "chat_text",
+            ")",
+            "re.search(",
+            'r"at",',
+            'r".*at",',
+          ],
+        },
+        {
+          prompt: "School Notes: Find all 3-letter words ending in 'og' in line_text and save to og_words.",
+          target: ["og_words", "=", "re.findall(", 'r".og",', "line_text", ")"],
+          tokens: [
+            "og_words",
+            "=",
+            "re.findall(",
+            'r".og",',
+            "line_text",
+            ")",
+            "re.match(",
+            'r"og",',
+            'r"..og",',
+          ],
+        },
+        {
+          prompt: "Game Log: Find all 3-letter words ending in 'un' in level_log and save to un_words.",
+          target: ["un_words", "=", "re.findall(", 'r".un",', "level_log", ")"],
+          tokens: [
+            "un_words",
+            "=",
+            "re.findall(",
+            'r".un",',
+            "level_log",
+            ")",
+            "re.sub(",
+            'r"un",',
+            'r".+un",',
+          ],
+        },
+      ];
+
+      const dotGameBank = document.getElementById("dot-game-bank");
+      const dotGameAnswer = document.getElementById("dot-game-answer");
+      const dotGamePrompt = document.getElementById("dot-game-prompt");
+      const dotGameRoundText = document.getElementById("dot-game-round");
+      const dotGameScoreText = document.getElementById("dot-game-score");
+      const dotGameFeedback = document.getElementById("dot-game-feedback");
+      const dotGameCheckBtn = document.getElementById("dot-game-check");
+      const dotGameClearBtn = document.getElementById("dot-game-clear");
+
+      let dotGameRoundIndex = 0;
+      let dotGameScore = 0;
+      let dotGameSelectedIndexes = [];
+
+      const makeDotGameTokenButton = (text, index) => {
+        const token = document.createElement("button");
+        token.type = "button";
+        token.className = "regex-token";
+        token.textContent = text;
+        token.dataset.index = String(index);
+        return token;
+      };
+
+      const updateDotGameHeader = () => {
+        dotGameRoundText.textContent = `Round ${dotGameRoundIndex + 1} of ${dotGameRounds.length}`;
+        dotGameScoreText.textContent = `Score: ${dotGameScore}`;
+      };
+
+      const updateDotGameAnswerPlaceholder = () => {
+        dotGameAnswer.classList.toggle("empty", dotGameSelectedIndexes.length === 0);
+      };
+
+      const setDotGameFeedback = (message, tone = "") => {
+        dotGameFeedback.textContent = message;
+        dotGameFeedback.classList.remove("success", "error");
+        if (tone) {
+          dotGameFeedback.classList.add(tone);
+        }
+      };
+
+      const syncDotGameBankState = () => {
+        const active = new Set(dotGameSelectedIndexes);
+        dotGameBank.querySelectorAll(".regex-token").forEach((tokenEl) => {
+          const index = Number(tokenEl.dataset.index);
+          const used = active.has(index);
+          tokenEl.classList.toggle("used", used);
+          tokenEl.disabled = used;
+        });
+      };
+
+      const renderDotGameAnswer = () => {
+        const round = dotGameRounds[dotGameRoundIndex];
+        dotGameAnswer.innerHTML = "";
+
+        dotGameSelectedIndexes.forEach((index, answerIndex) => {
+          const token = makeDotGameTokenButton(round.tokens[index], index);
+          token.classList.add("answer-token");
+          token.title = "Tap to remove";
+          token.addEventListener("click", () => {
+            dotGameSelectedIndexes.splice(answerIndex, 1);
+            renderDotGameAnswer();
+            syncDotGameBankState();
+            updateDotGameAnswerPlaceholder();
+          });
+          dotGameAnswer.appendChild(token);
+        });
+
+        updateDotGameAnswerPlaceholder();
+      };
+
+      const renderDotGameRound = () => {
+        const round = dotGameRounds[dotGameRoundIndex];
+        dotGameSelectedIndexes = [];
+        dotGameBank.innerHTML = "";
+        dotGameAnswer.innerHTML = "";
+
+        if (dotGamePrompt) {
+          dotGamePrompt.textContent = round.prompt;
+        }
+
+        setDotGameFeedback("");
+
+        const shuffledIndexes = getSearchGameShuffledIndexes(round.tokens.length);
+
+        shuffledIndexes.forEach((index) => {
+          const token = makeDotGameTokenButton(round.tokens[index], index);
+          token.addEventListener("click", () => {
+            dotGameSelectedIndexes.push(index);
+            renderDotGameAnswer();
+            syncDotGameBankState();
+          });
+          dotGameBank.appendChild(token);
+        });
+
+        updateDotGameHeader();
+        syncDotGameBankState();
+        updateDotGameAnswerPlaceholder();
+      };
+
+      const goToNextDotGameRound = () => {
+        if (dotGameRoundIndex < dotGameRounds.length - 1) {
+          dotGameRoundIndex += 1;
+          renderDotGameRound();
+          return;
+        }
+
+        setDotGameFeedback(
+          `Challenge complete! Final score: ${dotGameScore}/${dotGameRounds.length}`,
+          "success",
+        );
+        dotGameCheckBtn.disabled = true;
+      };
+
+      dotGameCheckBtn.addEventListener("click", () => {
+        const round = dotGameRounds[dotGameRoundIndex];
+        const answerTokens = dotGameSelectedIndexes.map((index) => round.tokens[index]);
+
+        const correct =
+          answerTokens.length === round.target.length &&
+          answerTokens.every((token, index) => token === round.target[index]);
+
+        if (correct) {
+          dotGameScore += 1;
+          updateDotGameHeader();
+          setDotGameFeedback("Great! You used the dot pattern correctly.", "success");
+          launchRegexConfetti();
+          setTimeout(goToNextDotGameRound, 750);
+          return;
+        }
+
+        setDotGameFeedback("Not quite. Check the function, pattern, and argument order.", "error");
+      });
+
+      dotGameClearBtn.addEventListener("click", () => {
+        dotGameSelectedIndexes = [];
+        renderDotGameAnswer();
+        syncDotGameBankState();
+        setDotGameFeedback("Answer cleared.");
+      });
+
+      renderDotGameRound();
 
       Reveal.initialize({
         hash: true,
