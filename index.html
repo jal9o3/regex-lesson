@@ -2604,13 +2604,7 @@ re.search(r"\d+", "abc 123")</code></pre>
         center: true,
         plugins: [],
       });
-      document
-        .querySelectorAll("pre code")
-        .forEach((el) => hljs.highlightElement(el));
-
-      // Fix HTML entities in code blocks for display
       document.querySelectorAll("pre code").forEach((el) => {
-        el.innerHTML = el.innerHTML.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
         hljs.highlightElement(el);
       });
 
